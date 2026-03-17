@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Ceilufas{% endblock %}
+{% block content %}
+<div class="mt-4">
+    <h2>Dashboard</h2>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Welcome, {{ current_user.username }}!</h5>
+            <p><strong>Email:</strong> {{ current_user.email }}</p>
+            <p><strong>Role:</strong> <span class="badge bg-primary">{{ current_user.role }}</span></p>
+            <p><strong>Member since:</strong> {{ current_user.created_at.strftime('%Y-%m-%d') }}</p>
+        </div>
+    </div>
+
+    {% if current_user.role == 'admin' %}
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Admin Panel</h5>
+            <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">Manage Users</a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if current_user.role == 'teacher' %}
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Teacher Area</h5>
+            <p>Welcome, Teacher! Your teaching tools will appear here.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if current_user.role == 'student' %}
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Student Area</h5>
+            <p>Welcome, Student! Your courses and assignments will appear here.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
