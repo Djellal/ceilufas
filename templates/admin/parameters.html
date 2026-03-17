@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Application Parameters - Ceilufas{% endblock %}
+{% block content %}
+<div class="mt-4">
+    <h2>Application Parameters</h2>
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Description</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for param in parameters %}
+                <tr>
+                    <td><code>{{ param.key }}</code></td>
+                    <td>{{ param.description or '' }}</td>
+                    <td>
+                        <input type="text" name="param_{{ param.id }}" value="{{ param.value or '' }}" class="form-control">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
+</div>
+{% endblock %}

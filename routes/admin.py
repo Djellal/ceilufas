@@ -1,8 +1,8 @@
 from functools import wraps
-from flask import Blueprint, render_template, redirect, url_for, flash, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, request
 from flask_login import login_required, current_user
 from extensions import db
-from models import User, Session
+from models import User, Session, AppParameter
 from forms import EditUserForm, SessionForm
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -122,3 +122,18 @@ def delete_session(session_id):
     db.session.commit()
     flash('Session deleted.', 'success')
     return redirect(url_for('admin.sessions'))
+
+
+@admin_bp.route('/parameters', methods=['GET', 'POST'])
+@admin_required
+def parameters():
+    if request.method == 'POST':
+        params = AppParameter.query.all()
+        for param in params:
+            new_value = request.form.get(f'param_{param.id}', '')
+            param.value = new_value
+        db.session.commit()
+        flash('Parameters updated successfully.', 'success')
+        return redirect(url_for('admin.parameters'))
+    all_params = AppParameter.query.order_by(AppParameter.key).all()
+    return render_template('admin/parameters.html', parameters=all_params)

@@ -30,6 +30,8 @@
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="{{ url_for('admin.users') }}">Manage Users</a></li>
                                 <li><a class="dropdown-item" href="{{ url_for('admin.sessions') }}">Manage Sessions</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin.parameters') }}">Application Parameters</a></li>
                             </ul>
                         </li>
                         {% endif %}
