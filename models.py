@@ -25,3 +25,31 @@ class Session(db.Model):
 
     def __repr__(self):
         return f'<Session {self.session_code}>'
+
+
+class AppParameter(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(100), unique=True, nullable=False)
+    value = db.Column(db.String(500), nullable=True)
+    description = db.Column(db.String(255), nullable=True)
+
+    def __repr__(self):
+        return f'<AppParameter {self.key}={self.value}>'
+
+    @staticmethod
+    def get(key, default=None):
+        param = AppParameter.query.filter_by(key=key).first()
+        return param.value if param else default
+
+    @staticmethod
+    def set(key, value, description=None):
+        param = AppParameter.query.filter_by(key=key).first()
+        if param:
+            param.value = value
+            if description is not None:
+                param.description = description
+        else:
+            param = AppParameter(key=key, value=value, description=description)
+            db.session.add(param)
+        db.session.commit()
+        return param

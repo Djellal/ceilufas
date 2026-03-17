@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from extensions import db, login_manager, bcrypt, cache, csrf, toolbar
-from models import User
+from models import User, AppParameter
 
 def create_app():
     app = Flask(__name__)
@@ -46,6 +46,25 @@ def create_app():
             )
             db.session.add(admin)
             db.session.commit()
+
+        # Seed default application parameters
+        defaults = [
+            ('current_session', None, 'Current active session ID'),
+            ('registration_opened', 'true', 'Whether user registration is open'),
+            ('app_name', 'Ceilufas', 'Application display name'),
+            ('maintenance_mode', 'false', 'Enable maintenance mode'),
+            ('smtp_host', 'smtp.gmail.com', 'SMTP server hostname'),
+            ('smtp_port', '587', 'SMTP server port'),
+            ('smtp_username', '', 'SMTP authentication username'),
+            ('smtp_password', '', 'SMTP authentication password'),
+            ('smtp_use_tls', 'true', 'Use TLS for SMTP connection'),
+            ('smtp_sender_name', 'Ceilufas', 'Email sender display name'),
+            ('smtp_sender_email', '', 'Email sender address'),
+        ]
+        for key, value, description in defaults:
+            if not AppParameter.query.filter_by(key=key).first():
+                db.session.add(AppParameter(key=key, value=value, description=description))
+        db.session.commit()
 
     return app
 
