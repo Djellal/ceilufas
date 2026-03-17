@@ -1,17 +1,22 @@
 import os
 from flask import Flask
-from extensions import db, login_manager, bcrypt
+from extensions import db, login_manager, bcrypt, cache, toolbar
 from models import User
 
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'ceilufas-dev-secret-key')
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ceilufas.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:ufaspg2017@127.0.0.1/ceilufas'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['CACHE_TYPE'] = 'SimpleCache'
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 300
+    app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
     db.init_app(app)
     login_manager.init_app(app)
     bcrypt.init_app(app)
+    cache.init_app(app)
+    toolbar.init_app(app)
 
     login_manager.login_view = 'auth.login'
     login_manager.login_message_category = 'info'
