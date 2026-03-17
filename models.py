@@ -13,3 +13,15 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return f'<User {self.username} ({self.role})>'
+
+
+class Session(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    session_code = db.Column(db.String(50), unique=True, nullable=False)
+    session_name = db.Column(db.String(200), nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Session {self.session_code}>'

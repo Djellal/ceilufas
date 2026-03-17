@@ -1,6 +1,6 @@
 import os
 from flask import Flask
-from extensions import db, login_manager, bcrypt, cache, toolbar
+from extensions import db, login_manager, bcrypt, cache, csrf, toolbar
 from models import User
 
 def create_app():
@@ -16,6 +16,7 @@ def create_app():
     login_manager.init_app(app)
     bcrypt.init_app(app)
     cache.init_app(app)
+    csrf.init_app(app)
     toolbar.init_app(app)
 
     login_manager.login_view = 'auth.login'

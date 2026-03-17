@@ -2,8 +2,8 @@ from functools import wraps
 from flask import Blueprint, render_template, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
 from extensions import db
-from models import User
-from forms import EditUserForm
+from models import User, Session
+from forms import EditUserForm, SessionForm
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -62,3 +62,63 @@ def delete_user(user_id):
     db.session.commit()
     flash('User deleted.', 'success')
     return redirect(url_for('admin.users'))
+
+
+@admin_bp.route('/sessions')
+@admin_required
+def sessions():
+    all_sessions = Session.query.order_by(Session.start_date.desc()).all()
+    return render_template('admin/sessions.html', sessions=all_sessions)
+
+
+@admin_bp.route('/sessions/create', methods=['GET', 'POST'])
+@admin_required
+def create_session():
+    form = SessionForm()
+    if form.validate_on_submit():
+        existing = Session.query.filter_by(session_code=form.session_code.data).first()
+        if existing:
+            flash('Session code already exists.', 'danger')
+            return render_template('admin/session_form.html', form=form, title='Create Session')
+        session = Session(
+            session_code=form.session_code.data,
+            session_name=form.session_name.data,
+            start_date=form.start_date.data,
+            end_date=form.end_date.data
+        )
+        db.session.add(session)
+        db.session.commit()
+        flash('Session created successfully.', 'success')
+        return redirect(url_for('admin.sessions'))
+    return render_template('admin/session_form.html', form=form, title='Create Session')
+
+
+@admin_bp.route('/sessions/<int:session_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_session(session_id):
+    session = Session.query.get_or_404(session_id)
+    form = SessionForm(obj=session)
+    if form.validate_on_submit():
+        if form.session_code.data != session.session_code:
+            existing = Session.query.filter_by(session_code=form.session_code.data).first()
+            if existing:
+                flash('Session code already exists.', 'danger')
+                return render_template('admin/session_form.html', form=form, title='Edit Session')
+        session.session_code = form.session_code.data
+        session.session_name = form.session_name.data
+        session.start_date = form.start_date.data
+        session.end_date = form.end_date.data
+        db.session.commit()
+        flash('Session updated successfully.', 'success')
+        return redirect(url_for('admin.sessions'))
+    return render_template('admin/session_form.html', form=form, title='Edit Session')
+
+
+@admin_bp.route('/sessions/<int:session_id>/delete', methods=['POST'])
+@admin_required
+def delete_session(session_id):
+    session = Session.query.get_or_404(session_id)
+    db.session.delete(session)
+    db.session.commit()
+    flash('Session deleted.', 'success')
+    return redirect(url_for('admin.sessions'))
