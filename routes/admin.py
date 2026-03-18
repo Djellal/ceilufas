@@ -2,8 +2,8 @@ from functools import wraps
 from flask import Blueprint, render_template, redirect, url_for, flash, abort, request
 from flask_login import login_required, current_user
 from extensions import db, bcrypt
-from models import User, Session, AppParameter, State, Municipality, Profession
-from forms import CreateUserForm, EditUserForm, SessionForm, StateForm, MunicipalityForm, ProfessionForm
+from models import User, Session, AppParameter, State, Municipality, Profession, CourseFee, Course
+from forms import CreateUserForm, EditUserForm, SessionForm, StateForm, MunicipalityForm, ProfessionForm, CourseFeeForm
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -293,6 +293,59 @@ def delete_municipality(state_id, municipality_id):
     db.session.commit()
     flash('Municipality deleted.', 'success')
     return redirect(url_for('admin.edit_state', state_id=state_id))
+
+
+@admin_bp.route('/course-fees')
+@admin_required
+def course_fees():
+    all_fees = CourseFee.query.all()
+    return render_template('admin/course_fees.html', course_fees=all_fees)
+
+
+@admin_bp.route('/course-fees/create', methods=['GET', 'POST'])
+@admin_required
+def create_course_fee():
+    form = CourseFeeForm()
+    form.profession_id.choices = [(p.id, p.name) for p in Profession.query.order_by(Profession.name).all()]
+    form.course_id.choices = [(c.id, c.name) for c in Course.query.order_by(Course.name).all()]
+    if form.validate_on_submit():
+        course_fee = CourseFee(
+            profession_id=form.profession_id.data,
+            course_id=form.course_id.data,
+            fee_value=form.fee_value.data
+        )
+        db.session.add(course_fee)
+        db.session.commit()
+        flash('Course fee created successfully.', 'success')
+        return redirect(url_for('admin.course_fees'))
+    return render_template('admin/course_fee_form.html', form=form, title='Create Course Fee')
+
+
+@admin_bp.route('/course-fees/<int:course_fee_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_course_fee(course_fee_id):
+    course_fee = CourseFee.query.get_or_404(course_fee_id)
+    form = CourseFeeForm(obj=course_fee)
+    form.profession_id.choices = [(p.id, p.name) for p in Profession.query.order_by(Profession.name).all()]
+    form.course_id.choices = [(c.id, c.name) for c in Course.query.order_by(Course.name).all()]
+    if form.validate_on_submit():
+        course_fee.profession_id = form.profession_id.data
+        course_fee.course_id = form.course_id.data
+        course_fee.fee_value = form.fee_value.data
+        db.session.commit()
+        flash('Course fee updated successfully.', 'success')
+        return redirect(url_for('admin.course_fees'))
+    return render_template('admin/course_fee_form.html', form=form, title='Edit Course Fee')
+
+
+@admin_bp.route('/course-fees/<int:course_fee_id>/delete', methods=['POST'])
+@admin_required
+def delete_course_fee(course_fee_id):
+    course_fee = CourseFee.query.get_or_404(course_fee_id)
+    db.session.delete(course_fee)
+    db.session.commit()
+    flash('Course fee deleted.', 'success')
+    return redirect(url_for('admin.course_fees'))
 
 
 @admin_bp.route('/parameters', methods=['GET', 'POST'])

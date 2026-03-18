@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, DateTimeLocalField, DecimalField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, DateTimeLocalField, DecimalField, HiddenField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange
 from models import User
 
@@ -79,4 +79,11 @@ class ProfessionForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired(), Length(max=300)])
     name_ar = StringField('Name (Arabic)', validators=[DataRequired(), Length(max=300)])
     fee_value = DecimalField('Default Fee Value', validators=[DataRequired(), NumberRange(min=0)])
+    submit = SubmitField('Save')
+
+
+class CourseFeeForm(FlaskForm):
+    profession_id = SelectField('Profession', coerce=int, validators=[DataRequired()])
+    course_id = SelectField('Course', coerce=int, validators=[DataRequired()])
+    fee_value = DecimalField('Fee Value', validators=[DataRequired(), NumberRange(min=0)])
     submit = SubmitField('Save')
