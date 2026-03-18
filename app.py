@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from flask import Flask
 from extensions import db, login_manager, bcrypt, cache, csrf, toolbar
-from models import User, AppParameter
+from models import User, AppParameter, Session
 
 def create_app():
     app = Flask(__name__)
@@ -24,6 +24,24 @@ def create_app():
     login_manager.login_message_category = 'info'
 
     app.jinja_env.globals['now'] = datetime.utcnow
+
+    @app.context_processor
+    def inject_current_session():
+        current_session_param = AppParameter.query.filter_by(key='current_session').first()
+        current_session = None
+        if current_session_param and current_session_param.value:
+            current_session = Session.query.get(int(current_session_param.value))
+        
+        contact_keys = ['contact_address', 'contact_website', 'contact_phone', 'contact_email', 
+                        'contact_facebook', 'contact_linkedin', 'contact_youtube', 
+                        'contact_instagram', 'contact_twitter']
+        contact_info = {}
+        for key in contact_keys:
+            param = AppParameter.query.filter_by(key=key).first()
+            if param and param.value:
+                contact_info[key] = param.value
+        
+        return dict(current_session=current_session, contact_info=contact_info)
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -57,6 +75,15 @@ def create_app():
             ('max_registrations_per_user', '3', 'Maximum number of registrations allowed per user'),
             ('app_name', 'Ceilufas', 'Application display name'),
             ('maintenance_mode', 'false', 'Enable maintenance mode'),
+            ('contact_address', '', 'Physical address'),
+            ('contact_website', '', 'Website URL'),
+            ('contact_phone', '', 'Phone number'),
+            ('contact_email', '', 'Contact email'),
+            ('contact_facebook', '', 'Facebook page URL'),
+            ('contact_linkedin', '', 'LinkedIn page URL'),
+            ('contact_youtube', '', 'YouTube channel URL'),
+            ('contact_instagram', '', 'Instagram page URL'),
+            ('contact_twitter', '', 'Twitter/X page URL'),
             ('smtp_host', 'smtp.gmail.com', 'SMTP server hostname'),
             ('smtp_port', '587', 'SMTP server port'),
             ('smtp_username', '', 'SMTP authentication username'),

@@ -2,8 +2,8 @@ from functools import wraps
 from flask import Blueprint, render_template, redirect, url_for, flash, abort, request
 from flask_login import login_required, current_user
 from extensions import db, bcrypt
-from models import User, Session, AppParameter, State, Municipality
-from forms import CreateUserForm, EditUserForm, SessionForm, StateForm, MunicipalityForm
+from models import User, Session, AppParameter, State, Municipality, Profession
+from forms import CreateUserForm, EditUserForm, SessionForm, StateForm, MunicipalityForm, ProfessionForm
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -16,6 +16,59 @@ def admin_required(f):
             abort(403)
         return f(*args, **kwargs)
     return decorated
+
+
+@admin_bp.route('/professions')
+@admin_required
+def professions():
+    all_professions = Profession.query.order_by(Profession.name).all()
+    return render_template('admin/professions.html', professions=all_professions)
+
+
+@admin_bp.route('/professions/create', methods=['GET', 'POST'])
+@admin_required
+def create_profession():
+    form = ProfessionForm()
+    if form.validate_on_submit():
+        profession = Profession(
+            name=form.name.data,
+            name_ar=form.name_ar.data,
+            fee_value=form.fee_value.data
+        )
+        db.session.add(profession)
+        db.session.commit()
+        flash('Profession created successfully.', 'success')
+        return redirect(url_for('admin.professions'))
+    return render_template('admin/profession_form.html', form=form, title='Create Profession')
+
+
+@admin_bp.route('/professions/<int:profession_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_profession(profession_id):
+    profession = Profession.query.get_or_404(profession_id)
+    form = ProfessionForm(obj=profession)
+    if form.validate_on_submit():
+        profession.name = form.name.data
+        profession.name_ar = form.name_ar.data
+        profession.fee_value = form.fee_value.data
+        db.session.commit()
+        flash('Profession updated successfully.', 'success')
+        return redirect(url_for('admin.professions'))
+    return render_template('admin/profession_form.html', form=form, title='Edit Profession')
+
+
+@admin_bp.route('/professions/<int:profession_id>/delete', methods=['POST'])
+@admin_required
+def delete_profession(profession_id):
+    profession = Profession.query.get_or_404(profession_id)
+    # Check if used in registrations or course fees
+    if profession.course_fees or profession.registrations:
+        flash('Cannot delete profession as it is linked to other records.', 'danger')
+        return redirect(url_for('admin.professions'))
+    db.session.delete(profession)
+    db.session.commit()
+    flash('Profession deleted.', 'success')
+    return redirect(url_for('admin.professions'))
 
 
 @admin_bp.route('/users')
@@ -257,6 +310,7 @@ def parameters():
     groups = {}
     group_labels = {
         'smtp': ('Email / SMTP', 'bi-envelope'),
+        'contact': ('Contact Info', 'bi-info-circle'),
     }
     default_group = ('General', 'bi-gear')
     for param in all_params:

@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, DateTimeLocalField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, SelectField, DateTimeLocalField, DecimalField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange
 from models import User
 
 
@@ -72,4 +72,11 @@ class SessionForm(FlaskForm):
     session_name_ar = StringField('Session Name (Arabic)', validators=[DataRequired(), Length(max=250)])
     start_date = DateTimeLocalField('Start Date', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
     end_date = DateTimeLocalField('End Date', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
+    submit = SubmitField('Save')
+
+
+class ProfessionForm(FlaskForm):
+    name = StringField('Name', validators=[DataRequired(), Length(max=300)])
+    name_ar = StringField('Name (Arabic)', validators=[DataRequired(), Length(max=300)])
+    fee_value = DecimalField('Default Fee Value', validators=[DataRequired(), NumberRange(min=0)])
     submit = SubmitField('Save')
