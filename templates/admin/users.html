@@ -2,39 +2,75 @@
 {% block title %}Manage Users - Ceilufas{% endblock %}
 {% block content %}
 <div class="mt-4">
-    <h2>Manage Users</h2>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Created</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users %}
-            <tr>
-                <td>{{ user.id }}</td>
-                <td>{{ user.username }}</td>
-                <td>{{ user.email }}</td>
-                <td><span class="badge bg-{% if user.role == 'admin' %}danger{% elif user.role == 'teacher' %}warning{% else %}primary{% endif %}">{{ user.role }}</span></td>
-                <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
-                <td>
-                    <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                    {% if user.id != current_user.id %}
-                    <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="POST" class="d-inline"
-                          onsubmit="return confirm('Delete this user?')">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                    </form>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="bi bi-people me-2"></i>Manage Users</h2>
+        <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add User</a>
+    </div>
+    <div id="usersGrid" style="height: 500px; width: 100%;"></div>
 </div>
+
+<!-- Hidden delete forms -->
+{% for user in users %}
+{% if user.id != current_user.id %}
+<form id="delete-user-{{ user.id }}" action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="POST" class="d-none">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+{% endif %}
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const rowData = [
+        {% for user in users %}
+        {
+            id: {{ user.id }},
+            username: "{{ user.username }}",
+            email: "{{ user.email }}",
+            role: "{{ user.role }}",
+            created_at: "{{ user.created_at.strftime('%Y-%m-%d') }}",
+            is_current: {{ 'true' if user.id == current_user.id else 'false' }}
+        }{{ "," if not loop.last }}
+        {% endfor %}
+    ];
+
+    const gridOptions = {
+        theme: agGrid.themeAlpine,
+        columnDefs: [
+            { field: 'id', headerName: 'ID', width: 80, sortable: true, filter: true },
+            { field: 'username', headerName: 'Username', flex: 1, sortable: true, filter: true },
+            { field: 'email', headerName: 'Email', flex: 1, sortable: true, filter: true },
+            {
+                field: 'role', headerName: 'Role', width: 120, sortable: true, filter: true,
+                cellRenderer: function (params) {
+                    const cls = params.value === 'admin' ? 'danger' : params.value === 'teacher' ? 'warning' : 'primary';
+                    return '<span class="badge bg-' + cls + '">' + params.value + '</span>';
+                }
+            },
+            { field: 'created_at', headerName: 'Created', width: 130, sortable: true, filter: true },
+            {
+                headerName: 'Actions', width: 160, sortable: false, filter: false,
+                cellRenderer: function (params) {
+                    let html = '<a href="/admin/users/' + params.data.id + '/edit" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i> Edit</a>';
+                    if (!params.data.is_current) {
+                        html += '<button class="btn btn-sm btn-outline-danger" onclick="if(confirm(\'Delete this user?\'))document.getElementById(\'delete-user-' + params.data.id + '\').submit()"><i class="bi bi-trash"></i></button>';
+                    }
+                    return html;
+                }
+            }
+        ],
+        rowData: rowData,
+        defaultColDef: {
+            resizable: true
+        },
+        domLayout: 'autoHeight',
+        pagination: true,
+        paginationPageSize: 15
+    };
+
+    const gridDiv = document.querySelector('#usersGrid');
+    agGrid.createGrid(gridDiv, gridOptions);
+});
+</script>
 {% endblock %}

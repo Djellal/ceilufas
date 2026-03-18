@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from flask import Flask
 from extensions import db, login_manager, bcrypt, cache, csrf, toolbar
 from models import User, AppParameter
@@ -21,6 +22,8 @@ def create_app():
 
     login_manager.login_view = 'auth.login'
     login_manager.login_message_category = 'info'
+
+    app.jinja_env.globals['now'] = datetime.utcnow
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -51,6 +54,7 @@ def create_app():
         defaults = [
             ('current_session', None, 'Current active session ID'),
             ('registration_opened', 'true', 'Whether user registration is open'),
+            ('max_registrations_per_user', '3', 'Maximum number of registrations allowed per user'),
             ('app_name', 'Ceilufas', 'Application display name'),
             ('maintenance_mode', 'false', 'Enable maintenance mode'),
             ('smtp_host', 'smtp.gmail.com', 'SMTP server hostname'),

@@ -23,15 +23,22 @@
                         {% endfor %}
                     </div>
                     <div class="mb-3">
+                        {{ form.session_name_ar.label(class="form-label") }}
+                        {{ form.session_name_ar(class="form-control" + (" is-invalid" if form.session_name_ar.errors else ""), dir="rtl") }}
+                        {% for error in form.session_name_ar.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
                         {{ form.start_date.label(class="form-label") }}
-                        {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else ""), type="date") }}
+                        {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else ""), type="datetime-local") }}
                         {% for error in form.start_date.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
                     </div>
                     <div class="mb-3">
                         {{ form.end_date.label(class="form-label") }}
-                        {{ form.end_date(class="form-control" + (" is-invalid" if form.end_date.errors else ""), type="date") }}
+                        {{ form.end_date(class="form-control" + (" is-invalid" if form.end_date.errors else ""), type="datetime-local") }}
                         {% for error in form.end_date.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}

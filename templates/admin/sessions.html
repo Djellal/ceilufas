@@ -3,39 +3,64 @@
 {% block content %}
 <div class="mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Manage Sessions</h2>
-        <a href="{{ url_for('admin.create_session') }}" class="btn btn-primary">Add Session</a>
+        <h2><i class="bi bi-calendar-event me-2"></i>Manage Sessions</h2>
+        <a href="{{ url_for('admin.create_session') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Session</a>
     </div>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for session in sessions %}
-            <tr>
-                <td>{{ session.id }}</td>
-                <td>{{ session.session_code }}</td>
-                <td>{{ session.session_name }}</td>
-                <td>{{ session.start_date.strftime('%Y-%m-%d') }}</td>
-                <td>{{ session.end_date.strftime('%Y-%m-%d') }}</td>
-                <td>
-                    <a href="{{ url_for('admin.edit_session', session_id=session.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                    <form action="{{ url_for('admin.delete_session', session_id=session.id) }}" method="POST" class="d-inline"
-                          onsubmit="return confirm('Delete this session?')">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div id="sessionsGrid" style="height: 500px; width: 100%;"></div>
 </div>
+
+<!-- Hidden delete forms -->
+{% for session in sessions %}
+<form id="delete-session-{{ session.id }}" action="{{ url_for('admin.delete_session', session_id=session.id) }}" method="POST" class="d-none">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const rowData = [
+        {% for session in sessions %}
+        {
+            id: {{ session.id }},
+            session_code: "{{ session.session_code }}",
+            session_name: "{{ session.session_name }}",
+            session_name_ar: "{{ session.session_name_ar }}",
+            start_date: "{{ session.start_date.strftime('%Y-%m-%d %H:%M') }}",
+            end_date: "{{ session.end_date.strftime('%Y-%m-%d %H:%M') }}"
+        }{{ "," if not loop.last }}
+        {% endfor %}
+    ];
+
+    const gridOptions = {
+        theme: agGrid.themeAlpine,
+        columnDefs: [
+            { field: 'id', headerName: 'ID', width: 80, sortable: true, filter: true },
+            { field: 'session_code', headerName: 'Code', width: 130, sortable: true, filter: true },
+            { field: 'session_name', headerName: 'Name', flex: 1, sortable: true, filter: true },
+            { field: 'session_name_ar', headerName: 'Name (Arabic)', flex: 1, sortable: true, filter: true },
+            { field: 'start_date', headerName: 'Start Date', width: 160, sortable: true, filter: true },
+            { field: 'end_date', headerName: 'End Date', width: 160, sortable: true, filter: true },
+            {
+                headerName: 'Actions', width: 160, sortable: false, filter: false,
+                cellRenderer: function (params) {
+                    return '<a href="/admin/sessions/' + params.data.id + '/edit" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i> Edit</a>' +
+                           '<button class="btn btn-sm btn-outline-danger" onclick="if(confirm(\'Delete this session?\'))document.getElementById(\'delete-session-' + params.data.id + '\').submit()"><i class="bi bi-trash"></i></button>';
+                }
+            }
+        ],
+        rowData: rowData,
+        defaultColDef: {
+            resizable: true
+        },
+        domLayout: 'autoHeight',
+        pagination: true,
+        paginationPageSize: 15
+    };
+
+    const gridDiv = document.querySelector('#sessionsGrid');
+    agGrid.createGrid(gridDiv, gridOptions);
+});
+</script>
 {% endblock %}
