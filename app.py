@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from flask import Flask
 from extensions import db, login_manager, bcrypt, cache, csrf, toolbar
-from models import User, AppParameter, Session
+from models import User, AppParameter, Session, CourseType
 
 def create_app():
     app = Flask(__name__)
@@ -95,6 +95,16 @@ def create_app():
         for key, value, description in defaults:
             if not AppParameter.query.filter_by(key=key).first():
                 db.session.add(AppParameter(key=key, value=value, description=description))
+        db.session.commit()
+
+        # Seed default course types
+        course_type_defaults = [
+            ('Workshop', 'ورشة'),
+            ('Language', 'لغة'),
+        ]
+        for name, name_ar in course_type_defaults:
+            if not CourseType.query.filter_by(name=name).first():
+                db.session.add(CourseType(name=name, name_ar=name_ar))
         db.session.commit()
 
     return app

@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, DateTimeLocalField, DecimalField, HiddenField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange
+from wtforms import StringField, PasswordField, SubmitField, SelectField, DateTimeLocalField, DecimalField, HiddenField, BooleanField, IntegerField, TextAreaField, FloatField
+from flask_wtf.file import FileField, FileAllowed
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange, Optional
 from models import User
 
 
@@ -86,4 +87,31 @@ class CourseFeeForm(FlaskForm):
     profession_id = SelectField('Profession', coerce=int, validators=[DataRequired()])
     course_id = SelectField('Course', coerce=int, validators=[DataRequired()])
     fee_value = DecimalField('Fee Value', validators=[DataRequired(), NumberRange(min=0)])
+    submit = SubmitField('Save')
+
+
+class CourseForm(FlaskForm):
+    code = StringField('Code', validators=[DataRequired(), Length(max=30)])
+    name = StringField('Name', validators=[DataRequired(), Length(max=250)])
+    name_ar = StringField('Name (Arabic)', validators=[DataRequired(), Length(max=250)])
+    course_type_id = SelectField('Course Type', coerce=int, validators=[DataRequired()])
+    is_active = BooleanField('Active', default=True)
+    order = IntegerField('Display Order', validators=[DataRequired(), NumberRange(min=0)], default=0)
+    image = FileField('Course Image', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Images only!')])
+    submit = SubmitField('Save')
+
+
+class CourseLevelForm(FlaskForm):
+    name = StringField('Name', validators=[DataRequired(), Length(max=250)])
+    name_ar = StringField('Name (Arabic)', validators=[DataRequired(), Length(max=250)])
+    duration = IntegerField('Duration (hours)', validators=[DataRequired(), NumberRange(min=1)])
+    level_order = IntegerField('Level Order', validators=[DataRequired(), NumberRange(min=0)], default=0)
+    is_active = BooleanField('Active', default=True)
+    next_level_id = SelectField('Next Level', coerce=int, validators=[Optional()])
+    submit = SubmitField('Save')
+
+
+class CourseComponentForm(FlaskForm):
+    name = StringField('Name', validators=[DataRequired(), Length(max=250)])
+    coeff = FloatField('Coefficient', validators=[DataRequired(), NumberRange(min=0)])
     submit = SubmitField('Save')

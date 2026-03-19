@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Manage Courses - Ceilufas{% endblock %}
+{% block content %}
+<div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="bi bi-book me-2"></i>Manage Courses</h2>
+        <a href="{{ url_for('admin.create_course') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Course</a>
+    </div>
+    <div id="coursesGrid" style="width: 100%;"></div>
+</div>
+
+<!-- Hidden delete forms -->
+{% for course in courses %}
+<form id="delete-course-{{ course.id }}" action="{{ url_for('admin.delete_course', course_id=course.id) }}" method="POST" class="d-none">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const rowData = [
+        {% for course in courses %}
+        {
+            id: {{ course.id }},
+            code: "{{ course.code }}",
+            name: "{{ course.name }}",
+            name_ar: "{{ course.name_ar }}",
+            course_type: "{{ course.course_type.name }}",
+            is_active: {{ 'true' if course.is_active else 'false' }},
+            order: {{ course.order }},
+            level_count: {{ course.levels|length }},
+            component_count: {{ course.components|length }}
+        }{{ "," if not loop.last }}
+        {% endfor %}
+    ];
+
+    const gridOptions = {
+        theme: agGrid.themeAlpine,
+        columnDefs: [
+            { field: 'code', headerName: 'Code', width: 110, sortable: true, filter: true },
+            { field: 'name', headerName: 'Name', flex: 1, sortable: true, filter: true },
+            { field: 'name_ar', headerName: 'Name (Arabic)', flex: 1, sortable: true, filter: true },
+            { field: 'course_type', headerName: 'Type', width: 120, sortable: true, filter: true },
+            {
+                field: 'is_active', headerName: 'Active', width: 90, sortable: true, filter: true,
+                cellRenderer: function (params) {
+                    return params.value
+                        ? '<span class="badge bg-success">Yes</span>'
+                        : '<span class="badge bg-secondary">No</span>';
+                }
+            },
+            { field: 'order', headerName: 'Order', width: 80, sortable: true, filter: true },
+            {
+                field: 'level_count', headerName: 'Levels', width: 90, sortable: true,
+                cellRenderer: function (params) {
+                    return '<span class="badge bg-info text-dark">' + params.value + '</span>';
+                }
+            },
+            {
+                field: 'component_count', headerName: 'Components', width: 110, sortable: true,
+                cellRenderer: function (params) {
+                    return '<span class="badge bg-secondary">' + params.value + '</span>';
+                }
+            },
+            {
+                headerName: 'Actions', width: 160, sortable: false, filter: false,
+                cellRenderer: function (params) {
+                    return '<a href="/admin/courses/' + params.data.id + '/edit" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i> Edit</a>' +
+                           '<button class="btn btn-sm btn-outline-danger" onclick="if(confirm(\'Delete this course?\'))document.getElementById(\'delete-course-' + params.data.id + '\').submit()"><i class="bi bi-trash"></i></button>';
+                }
+            }
+        ],
+        rowData: rowData,
+        defaultColDef: {
+            resizable: true
+        },
+        domLayout: 'autoHeight',
+        pagination: true,
+        paginationPageSize: 20
+    };
+
+    const gridDiv = document.querySelector('#coursesGrid');
+    agGrid.createGrid(gridDiv, gridOptions);
+});
+</script>
+{% endblock %}

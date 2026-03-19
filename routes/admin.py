@@ -1,9 +1,12 @@
+import os
+import uuid
 from functools import wraps
-from flask import Blueprint, render_template, redirect, url_for, flash, abort, request
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, request, current_app
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 from extensions import db, bcrypt
-from models import User, Session, AppParameter, State, Municipality, Profession, CourseFee, Course
-from forms import CreateUserForm, EditUserForm, SessionForm, StateForm, MunicipalityForm, ProfessionForm, CourseFeeForm
+from models import User, Session, AppParameter, State, Municipality, Profession, CourseFee, Course, CourseType, CourseLevel, CourseComponent
+from forms import CreateUserForm, EditUserForm, SessionForm, StateForm, MunicipalityForm, ProfessionForm, CourseFeeForm, CourseForm, CourseLevelForm, CourseComponentForm
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -382,3 +385,220 @@ def parameters():
         grouped.append({'key': key, 'label': label, 'icon': icon, 'params': params})
     all_sessions = Session.query.order_by(Session.start_date.desc()).all()
     return render_template('admin/parameters.html', grouped=grouped, sessions=all_sessions)
+
+
+COURSE_IMAGE_FOLDER = os.path.join('static', 'images', 'courses')
+
+
+def _save_course_image(file_storage):
+    filename = secure_filename(file_storage.filename)
+    ext = os.path.splitext(filename)[1]
+    unique_name = f"{uuid.uuid4().hex}{ext}"
+    upload_dir = os.path.join(current_app.root_path, COURSE_IMAGE_FOLDER)
+    os.makedirs(upload_dir, exist_ok=True)
+    file_storage.save(os.path.join(upload_dir, unique_name))
+    return unique_name
+
+
+# ── Courses ──────────────────────────────────────────────────────────────────
+
+@admin_bp.route('/courses')
+@admin_required
+def courses():
+    all_courses = Course.query.order_by(Course.order).all()
+    return render_template('admin/courses.html', courses=all_courses)
+
+
+@admin_bp.route('/courses/create', methods=['GET', 'POST'])
+@admin_required
+def create_course():
+    form = CourseForm()
+    form.course_type_id.choices = [(t.id, t.name) for t in CourseType.query.order_by(CourseType.name).all()]
+    if form.validate_on_submit():
+        existing = Course.query.filter_by(code=form.code.data).first()
+        if existing:
+            flash('Course code already exists.', 'danger')
+            return render_template('admin/course_form.html', form=form, title='Create Course', course=None, levels=[], components=[])
+        image_filename = ''
+        if form.image.data:
+            image_filename = _save_course_image(form.image.data)
+        course = Course(
+            code=form.code.data,
+            name=form.name.data,
+            name_ar=form.name_ar.data,
+            course_type_id=form.course_type_id.data,
+            is_active=form.is_active.data,
+            order=form.order.data,
+            image=image_filename
+        )
+        db.session.add(course)
+        db.session.commit()
+        flash('Course created successfully.', 'success')
+        return redirect(url_for('admin.edit_course', course_id=course.id))
+    return render_template('admin/course_form.html', form=form, title='Create Course', course=None, levels=[], components=[])
+
+
+@admin_bp.route('/courses/<int:course_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_course(course_id):
+    course = Course.query.get_or_404(course_id)
+    form = CourseForm(obj=course)
+    form.course_type_id.choices = [(t.id, t.name) for t in CourseType.query.order_by(CourseType.name).all()]
+    if form.validate_on_submit():
+        if form.code.data != course.code:
+            existing = Course.query.filter_by(code=form.code.data).first()
+            if existing:
+                flash('Course code already exists.', 'danger')
+                levels = CourseLevel.query.filter_by(course_id=course_id).order_by(CourseLevel.level_order).all()
+                components = CourseComponent.query.filter_by(course_id=course_id).order_by(CourseComponent.name).all()
+                return render_template('admin/course_form.html', form=form, title='Edit Course', course=course, levels=levels, components=components)
+        course.code = form.code.data
+        course.name = form.name.data
+        course.name_ar = form.name_ar.data
+        course.course_type_id = form.course_type_id.data
+        course.is_active = form.is_active.data
+        course.order = form.order.data
+        if form.image.data:
+            if course.image:
+                old_path = os.path.join(current_app.root_path, COURSE_IMAGE_FOLDER, course.image)
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+            course.image = _save_course_image(form.image.data)
+        db.session.commit()
+        flash('Course updated successfully.', 'success')
+        return redirect(url_for('admin.edit_course', course_id=course.id))
+    levels = CourseLevel.query.filter_by(course_id=course_id).order_by(CourseLevel.level_order).all()
+    components = CourseComponent.query.filter_by(course_id=course_id).order_by(CourseComponent.name).all()
+    return render_template('admin/course_form.html', form=form, title='Edit Course', course=course, levels=levels, components=components)
+
+
+@admin_bp.route('/courses/<int:course_id>/delete', methods=['POST'])
+@admin_required
+def delete_course(course_id):
+    course = Course.query.get_or_404(course_id)
+    if course.registrations:
+        flash('Cannot delete course as it has registrations.', 'danger')
+        return redirect(url_for('admin.edit_course', course_id=course_id))
+    if course.fees:
+        flash('Cannot delete course as it has fee records. Remove them first.', 'danger')
+        return redirect(url_for('admin.edit_course', course_id=course_id))
+    CourseComponent.query.filter_by(course_id=course_id).delete()
+    CourseLevel.query.filter_by(course_id=course_id).delete()
+    db.session.delete(course)
+    db.session.commit()
+    flash('Course deleted.', 'success')
+    return redirect(url_for('admin.courses'))
+
+
+# ── Course Levels ────────────────────────────────────────────────────────────
+
+@admin_bp.route('/courses/<int:course_id>/levels/create', methods=['GET', 'POST'])
+@admin_required
+def create_course_level(course_id):
+    course = Course.query.get_or_404(course_id)
+    form = CourseLevelForm()
+    existing_levels = CourseLevel.query.filter_by(course_id=course_id).order_by(CourseLevel.level_order).all()
+    form.next_level_id.choices = [(0, '— None —')] + [(l.id, l.name) for l in existing_levels]
+    if form.validate_on_submit():
+        level = CourseLevel(
+            name=form.name.data,
+            name_ar=form.name_ar.data,
+            duration=form.duration.data,
+            level_order=form.level_order.data,
+            is_active=form.is_active.data,
+            course_id=course.id,
+            next_level_id=form.next_level_id.data if form.next_level_id.data != 0 else None
+        )
+        db.session.add(level)
+        db.session.commit()
+        flash('Level created successfully.', 'success')
+        return redirect(url_for('admin.edit_course', course_id=course.id))
+    return render_template('admin/course_level_form.html', form=form, title='Create Level', course=course)
+
+
+@admin_bp.route('/courses/<int:course_id>/levels/<int:level_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_course_level(course_id, level_id):
+    course = Course.query.get_or_404(course_id)
+    level = CourseLevel.query.get_or_404(level_id)
+    form = CourseLevelForm(obj=level)
+    other_levels = CourseLevel.query.filter(CourseLevel.course_id == course_id, CourseLevel.id != level_id).order_by(CourseLevel.level_order).all()
+    form.next_level_id.choices = [(0, '— None —')] + [(l.id, l.name) for l in other_levels]
+    if not form.is_submitted():
+        form.next_level_id.data = level.next_level_id if level.next_level_id else 0
+    if form.validate_on_submit():
+        level.name = form.name.data
+        level.name_ar = form.name_ar.data
+        level.duration = form.duration.data
+        level.level_order = form.level_order.data
+        level.is_active = form.is_active.data
+        level.next_level_id = form.next_level_id.data if form.next_level_id.data != 0 else None
+        db.session.commit()
+        flash('Level updated successfully.', 'success')
+        return redirect(url_for('admin.edit_course', course_id=course.id))
+    return render_template('admin/course_level_form.html', form=form, title='Edit Level', course=course)
+
+
+@admin_bp.route('/courses/<int:course_id>/levels/<int:level_id>/delete', methods=['POST'])
+@admin_required
+def delete_course_level(course_id, level_id):
+    course = Course.query.get_or_404(course_id)
+    level = CourseLevel.query.get_or_404(level_id)
+    if level.registrations:
+        flash('Cannot delete level as it has registrations.', 'danger')
+        return redirect(url_for('admin.edit_course', course_id=course.id))
+    # Clear next_level references pointing to this level
+    CourseLevel.query.filter_by(next_level_id=level_id).update({CourseLevel.next_level_id: None})
+    db.session.delete(level)
+    db.session.commit()
+    flash('Level deleted.', 'success')
+    return redirect(url_for('admin.edit_course', course_id=course.id))
+
+
+# ── Course Components ────────────────────────────────────────────────────────
+
+@admin_bp.route('/courses/<int:course_id>/components/create', methods=['GET', 'POST'])
+@admin_required
+def create_course_component(course_id):
+    course = Course.query.get_or_404(course_id)
+    form = CourseComponentForm()
+    if form.validate_on_submit():
+        component = CourseComponent(
+            name=form.name.data,
+            coeff=form.coeff.data,
+            course_id=course.id
+        )
+        db.session.add(component)
+        db.session.commit()
+        flash('Component created successfully.', 'success')
+        return redirect(url_for('admin.edit_course', course_id=course.id))
+    return render_template('admin/course_component_form.html', form=form, title='Create Component', course=course)
+
+
+@admin_bp.route('/courses/<int:course_id>/components/<int:component_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_course_component(course_id, component_id):
+    course = Course.query.get_or_404(course_id)
+    component = CourseComponent.query.get_or_404(component_id)
+    form = CourseComponentForm(obj=component)
+    if form.validate_on_submit():
+        component.name = form.name.data
+        component.coeff = form.coeff.data
+        db.session.commit()
+        flash('Component updated successfully.', 'success')
+        return redirect(url_for('admin.edit_course', course_id=course.id))
+    return render_template('admin/course_component_form.html', form=form, title='Edit Component', course=course)
+
+
+@admin_bp.route('/courses/<int:course_id>/components/<int:component_id>/delete', methods=['POST'])
+@admin_required
+def delete_course_component(course_id, component_id):
+    course = Course.query.get_or_404(course_id)
+    component = CourseComponent.query.get_or_404(component_id)
+    if component.evaluations:
+        flash('Cannot delete component as it has evaluations.', 'danger')
+        return redirect(url_for('admin.edit_course', course_id=course.id))
+    db.session.delete(component)
+    db.session.commit()
+    flash('Component deleted.', 'success')
+    return redirect(url_for('admin.edit_course', course_id=course.id))

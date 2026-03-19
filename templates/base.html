@@ -42,10 +42,20 @@
             flex: 1;
         }
         .footer {
-            background-color: #1a1d20;
+            background: linear-gradient(180deg, #1e2228 0%, #14171b 100%);
             color: #9ca3af;
             font-size: .85rem;
-            border-top: 1px solid #2d3238;
+            border-top: 3px solid #3b82f6;
+            position: relative;
+        }
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(59,130,246,.4), transparent);
         }
         .footer a {
             color: #d1d5db;
@@ -53,44 +63,57 @@
             transition: color 0.2s ease;
         }
         .footer a:hover {
-            color: #fff;
+            color: #60a5fa;
         }
         .footer-social {
             display: flex;
             justify-content: center;
-            gap: 0.75rem;
+            gap: 0.6rem;
         }
         .footer-social a {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background-color: #2d3238;
-            font-size: 1.1rem;
-            transition: all 0.2s ease;
+            background-color: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.08);
+            font-size: 1.15rem;
+            color: #9ca3af;
+            transition: all 0.25s ease;
         }
         .footer-social a:hover {
-            background-color: #4a5568;
-            transform: translateY(-2px);
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: #fff;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(59,130,246,.35);
         }
         .footer-contact-item {
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
-            padding: 0.25rem 0.75rem;
-            background-color: #2d3238;
+            padding: 0.3rem 0.85rem;
+            background-color: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.07);
             border-radius: 2rem;
-            margin: 0.25rem;
+            margin: 0.3rem;
+            transition: background-color 0.2s ease;
+        }
+        .footer-contact-item:hover {
+            background-color: rgba(255,255,255,.1);
         }
         .footer-contact-item i {
-            color: #6b7280;
+            color: #3b82f6;
         }
         .footer-divider {
             height: 1px;
-            background: linear-gradient(90deg, transparent, #374151, transparent);
-            margin: 1rem 0;
+            background: linear-gradient(90deg, transparent, rgba(59,130,246,.25), transparent);
+            margin: 1.25rem 0;
+        }
+        .footer .text-center span {
+            opacity: .8;
         }
     </style>
 </head>
@@ -126,6 +149,11 @@
                                 <li>
                                     <a class="dropdown-item" href="{{ url_for('admin.professions') }}">
                                         <i class="bi bi-briefcase me-2"></i>Manage Professions
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin.courses') }}">
+                                        <i class="bi bi-book me-2"></i>Manage Courses
                                     </a>
                                 </li>
                                 <li>
@@ -207,15 +235,15 @@
     <footer class="footer py-4 mt-auto">
         <div class="container">
             {% if contact_info or current_session %}
-            <div class="row justify-content-center text-center">
+            <div class="row align-items-center">
                 {% if contact_info %}
-                <div class="col-12 mb-3">
+                <div class="col-lg text-center text-lg-start mb-3 mb-lg-0">
                     {% if contact_info.contact_address %}<span class="footer-contact-item"><i class="bi bi-geo-alt"></i> {{ contact_info.contact_address }}</span>{% endif %}
                     {% if contact_info.contact_phone %}<span class="footer-contact-item"><i class="bi bi-telephone"></i> {{ contact_info.contact_phone }}</span>{% endif %}
                     {% if contact_info.contact_email %}<span class="footer-contact-item"><i class="bi bi-envelope"></i> <a href="mailto:{{ contact_info.contact_email }}">{{ contact_info.contact_email }}</a></span>{% endif %}
                     {% if contact_info.contact_website %}<span class="footer-contact-item"><i class="bi bi-globe"></i> <a href="{{ contact_info.contact_website }}" target="_blank">Website</a></span>{% endif %}
                 </div>
-                <div class="col-12 mb-3">
+                <div class="col-lg-auto text-center">
                     <div class="footer-social">
                         {% if contact_info.contact_facebook %}<a href="{{ contact_info.contact_facebook }}" target="_blank" aria-label="Facebook"><i class="bi bi-facebook"></i></a>{% endif %}
                         {% if contact_info.contact_linkedin %}<a href="{{ contact_info.contact_linkedin }}" target="_blank" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>{% endif %}
