@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, DateTimeLocalField, DecimalField, HiddenField, BooleanField, IntegerField, TextAreaField, FloatField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, DateTimeLocalField, DateField, DecimalField, HiddenField, BooleanField, IntegerField, TextAreaField, FloatField
 from flask_wtf.file import FileField, FileAllowed
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange, Optional
 from models import User
@@ -115,3 +115,22 @@ class CourseComponentForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired(), Length(max=250)])
     coeff = FloatField('Coefficient', validators=[DataRequired(), NumberRange(min=0)])
     submit = SubmitField('Save')
+
+
+class CourseRegistrationForm(FlaskForm):
+    first_name = StringField('First Name', validators=[DataRequired(), Length(max=100)])
+    last_name = StringField('Last Name', validators=[DataRequired(), Length(max=100)])
+    first_name_ar = StringField('First Name (Arabic)', validators=[DataRequired(), Length(max=100)])
+    last_name_ar = StringField('Last Name (Arabic)', validators=[DataRequired(), Length(max=100)])
+    birth_date = DateField('Birth Date', validators=[DataRequired()])
+    birth_state_id = SelectField('Birth State', coerce=str, validators=[DataRequired()])
+    birth_municipality_id = SelectField('Birth Municipality', coerce=int, validators=[DataRequired()])
+    address = StringField('Address', validators=[DataRequired(), Length(max=250)])
+    tel = StringField('Phone', validators=[DataRequired(), Length(max=20)])
+    profession_id = SelectField('Profession', coerce=int, validators=[Optional()])
+    course_id = SelectField('Course', coerce=int, validators=[DataRequired()])
+    course_level_id = SelectField('Level', coerce=int, validators=[Optional()])
+    session_id = SelectField('Session', coerce=int, validators=[Optional()])
+    is_reregistration = BooleanField('Re-registration')
+    registration_terms_accepted = BooleanField('I accept the registration terms', validators=[DataRequired(message='You must accept the registration terms.')])
+    submit = SubmitField('Register')

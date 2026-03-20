@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - Ceilufas{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card mt-4">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="bi bi-journal-plus me-2"></i>{{ title }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <!-- Personal Information -->
+                    <h5 class="mb-3 text-primary"><i class="bi bi-person me-1"></i> Personal Information</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.last_name.label(class="form-label") }}
+                            {{ form.last_name(class="form-control" + (" is-invalid" if form.last_name.errors else "")) }}
+                            {% for error in form.last_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.first_name.label(class="form-label") }}
+                            {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else "")) }}
+                            {% for error in form.first_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.last_name_ar.label(class="form-label") }}
+                            {{ form.last_name_ar(class="form-control" + (" is-invalid" if form.last_name_ar.errors else ""), dir="rtl") }}
+                            {% for error in form.last_name_ar.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.first_name_ar.label(class="form-label") }}
+                            {{ form.first_name_ar(class="form-control" + (" is-invalid" if form.first_name_ar.errors else ""), dir="rtl") }}
+                            {% for error in form.first_name_ar.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            {{ form.birth_date.label(class="form-label") }}
+                            {{ form.birth_date(class="form-control" + (" is-invalid" if form.birth_date.errors else ""), type="date") }}
+                            {% for error in form.birth_date.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            {{ form.birth_state_id.label(class="form-label") }}
+                            {{ form.birth_state_id(class="form-select" + (" is-invalid" if form.birth_state_id.errors else ""), id="birth_state_id") }}
+                            {% for error in form.birth_state_id.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            {{ form.birth_municipality_id.label(class="form-label") }}
+                            {{ form.birth_municipality_id(class="form-select" + (" is-invalid" if form.birth_municipality_id.errors else ""), id="birth_municipality_id") }}
+                            {% for error in form.birth_municipality_id.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Contact -->
+                    <h5 class="mb-3 mt-2 text-primary"><i class="bi bi-telephone me-1"></i> Contact</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.address.label(class="form-label") }}
+                            {{ form.address(class="form-control" + (" is-invalid" if form.address.errors else "")) }}
+                            {% for error in form.address.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.tel.label(class="form-label") }}
+                            {{ form.tel(class="form-control" + (" is-invalid" if form.tel.errors else "")) }}
+                            {% for error in form.tel.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Course Information -->
+                    <h5 class="mb-3 mt-2 text-primary"><i class="bi bi-book me-1"></i> Course Information</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.course_id.label(class="form-label") }}
+                            {{ form.course_id(class="form-select" + (" is-invalid" if form.course_id.errors else ""), id="course_id") }}
+                            {% for error in form.course_id.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.course_level_id.label(class="form-label") }}
+                            {{ form.course_level_id(class="form-select" + (" is-invalid" if form.course_level_id.errors else ""), id="course_level_id") }}
+                            {% for error in form.course_level_id.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.profession_id.label(class="form-label") }}
+                            {{ form.profession_id(class="form-select" + (" is-invalid" if form.profession_id.errors else "")) }}
+                            {% for error in form.profession_id.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.session_id.label(class="form-label") }}
+                            {{ form.session_id(class="form-select" + (" is-invalid" if form.session_id.errors else ""), disabled="disabled") }}
+                            {% for error in form.session_id.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <input type="hidden" name="session_id" value="{{ form.session_id.data or 0 }}">
+                        </div>
+                    </div>
+
+                    <!-- Additional -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.is_reregistration(class="form-check-input") }}
+                                {{ form.is_reregistration.label(class="form-check-label") }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.registration_terms_accepted(class="form-check-input" + (" is-invalid" if form.registration_terms_accepted.errors else "")) }}
+                            {{ form.registration_terms_accepted.label(class="form-check-label") }}
+                            {% for error in form.registration_terms_accepted.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const stateSelect = document.getElementById('birth_state_id');
+    const municipalitySelect = document.getElementById('birth_municipality_id');
+    const courseSelect = document.getElementById('course_id');
+    const levelSelect = document.getElementById('course_level_id');
+
+    stateSelect.addEventListener('change', function () {
+        const stateId = this.value;
+        municipalitySelect.innerHTML = '<option value="0">— Select Municipality —</option>';
+        if (!stateId) return;
+        fetch('/api/municipalities/' + stateId)
+            .then(r => r.json())
+            .then(data => {
+                data.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = m.name;
+                    municipalitySelect.appendChild(opt);
+                });
+            });
+    });
+
+    courseSelect.addEventListener('change', function () {
+        const courseId = this.value;
+        levelSelect.innerHTML = '<option value="0">— Select Level —</option>';
+        if (!courseId || courseId === '0') return;
+        fetch('/api/course-levels/' + courseId)
+            .then(r => r.json())
+            .then(data => {
+                data.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l.id;
+                    opt.textContent = l.name;
+                    levelSelect.appendChild(opt);
+                });
+            });
+    });
+});
+</script>
+{% endblock %}
